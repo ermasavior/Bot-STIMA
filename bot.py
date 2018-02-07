@@ -30,17 +30,63 @@ def output_shot(choose, x, y):
 
 
 def fire_shot(opponent_map):
-    # To send through a command please pass through the following <code>,<x>,<y>
-    # Possible codes: 1 - Fireshot, 0 - Do Nothing (please pass through coordinates if
-    #  code 1 is your choice)
-    targets = []
-    for cell in opponent_map:
-        if not cell['Damaged'] and not cell['Missed']:
-            valid_cell = cell['X'], cell['Y']
-            targets.append(valid_cell)
-    target = choice(targets)
-    output_shot(1,*target)
-    return
+    # Punya kita!
+	find_hit(opponent_map)
+	if state['Round'] == 1 or hit == []:
+		targets = []
+		for cell in opponent_map:
+			if not cell['Damaged'] and not cell['Missed']:
+				valid_cell = cell['X'], cell['Y']
+				targets.append(valid_cell)
+		target = choice(targets)
+		output_shot(1,*target)
+	else:
+		target = choice(hit)
+		double_shot(target)
+		if not(tembak):
+			diagonal_cross(target)
+			if not(tembak):
+				targets = []
+				greedy_targets = []
+				for cell in opponent_map:
+					if cell['Damaged']:
+						A=cell
+						if cell['X']!=map_size-1:
+						#cek cell ke kanan
+							cell['X']+=1
+							if not cell['Damaged'] and not cell['Missed']:
+								valid_cell = cell['X'], cell['Y']
+								greedy_targets.append(valid_cell)
+						cell=A
+						#cek cell ke kiri
+						if cell['X']!=0:
+							cell['X']-=1
+							if not cell['Damaged'] and not cell['Missed']:
+								valid_cell = cell['X'], cell['Y']
+								greedy_targets.append(valid_cell)
+						cell=A
+						#cek cell ke atas
+						if cell['Y']!=map_size-1:
+							cell['Y']+=1
+							if not cell['Damaged'] and not cell['Missed']:
+								valid_cell = cell['X'], cell['Y']
+								greedy_targets.append(valid_cell)
+						cell=A
+						#cek cell ke bawah
+						if cell['Y']!=0:
+							cell['Y']-=1
+							if not cell['Damaged'] and not cell['Missed']:
+								valid_cell = cell['X'], cell['Y']
+								greedy_targets.append(valid_cell)                                
+					if not cell['Damaged'] and not cell['Missed']:
+						valid_cell = cell['X'], cell['Y']
+						targets.append(valid_cell)
+				if greedy_targets!=[]:
+					target=choice(greedy_targets)
+				else:
+					target = choice(targets)
+				output_shot(*target)
+	return
 
 def energyround():
 	if map_size == 7:
