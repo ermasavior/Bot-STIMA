@@ -44,15 +44,16 @@ def fire_shot(opponent_map):
 
 def energyround():
 	if map_size == 7:
-		enperround = 2;
+		enperround = 2
 	elif map_size == 10:
-		enperround = 3;
+		enperround = 3
 	else:
 		enperround = 4;
-	return enperround;
+	return enperround
 
 
 def double_shot(cell):
+	global tembak
 	ships = state['PlayerMap']['Owner']['Ships']
 	for ship in ships:
 		if ship['ShipType'] == "Destroyer" and ship['Destroyed'] == False:
@@ -67,8 +68,35 @@ def double_shot(cell):
 				if cell['X'] != 0 and cell['X'] != map_size-1:
 					if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
 						output_shot(2,cell['X'],cell['Y'])	
+						tembak = True
 				
 def diagonal_cross(cell):
+	ships = state['PlayerMap']['Owner']['Ships']
+	for ship in ships:
+		if ship['ShipType'] == "Cruiser" and ship['Destroyed'] == False:
+			bisa = True
+	if bisa == True:
+		if state['PlayerMap']['Owner']['Energy'] >= 14*energyround():
+			if kosong_plus(cell):
+				output_shot(6,cell['X'],cell['Y'])	
+				tembak = True
+			
+def kosong_plus(cell):
+	kosong = True
+	cell['X']+=1
+	if cell['Damaged']:
+		kosong = False
+	cell['X']-=2
+	if cell['Damaged']:
+		kosong = False
+	cell['X'] += 1
+	cell['Y'] += 1
+	if cell['Damaged']:
+		kosong = False
+	cell['Y'] -=2
+	if cell['Damaged']:
+		kosong = False
+	return kosong
 	
 
 def myfire_shot(opponent_map):
