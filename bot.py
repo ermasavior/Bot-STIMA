@@ -46,46 +46,48 @@ def fire_shot(opponent_map):
 		if not(tembak):
 			diagonal_cross(target)
 			if not(tembak):
-				targets = []
-				greedy_targets = []
-				for cell in opponent_map:
-					if cell['Damaged']:
-						A=cell
-						if cell['X']!=map_size-1:
-						#cek cell ke kanan
-							cell['X']+=1
-							if not cell['Damaged'] and not cell['Missed']:
-								valid_cell = cell['X'], cell['Y']
-								greedy_targets.append(valid_cell)
-						cell=A
-						#cek cell ke kiri
-						if cell['X']!=0:
-							cell['X']-=1
-							if not cell['Damaged'] and not cell['Missed']:
-								valid_cell = cell['X'], cell['Y']
-								greedy_targets.append(valid_cell)
-						cell=A
-						#cek cell ke atas
-						if cell['Y']!=map_size-1:
-							cell['Y']+=1
-							if not cell['Damaged'] and not cell['Missed']:
-								valid_cell = cell['X'], cell['Y']
-								greedy_targets.append(valid_cell)
-						cell=A
-						#cek cell ke bawah
-						if cell['Y']!=0:
-							cell['Y']-=1
-							if not cell['Damaged'] and not cell['Missed']:
-								valid_cell = cell['X'], cell['Y']
-								greedy_targets.append(valid_cell)                                
-					if not cell['Damaged'] and not cell['Missed']:
-						valid_cell = cell['X'], cell['Y']
-						targets.append(valid_cell)
-				if greedy_targets!=[]:
-					target=choice(greedy_targets)
-				else:
-					target = choice(targets)
-				output_shot(*target)
+				seeker(target)
+				if not(tembak):
+					targets = []
+					greedy_targets = []
+					for cell in opponent_map:
+						if cell['Damaged']:
+							A=cell
+							if cell['X']!=map_size-1:
+							#cek cell ke kanan
+								cell['X']+=1
+								if not cell['Damaged'] and not cell['Missed']:
+									valid_cell = cell['X'], cell['Y']
+									greedy_targets.append(valid_cell)
+							cell=A
+							#cek cell ke kiri
+							if cell['X']!=0:
+								cell['X']-=1
+								if not cell['Damaged'] and not cell['Missed']:
+									valid_cell = cell['X'], cell['Y']
+									greedy_targets.append(valid_cell)
+							cell=A
+							#cek cell ke atas
+							if cell['Y']!=map_size-1:
+								cell['Y']+=1
+								if not cell['Damaged'] and not cell['Missed']:
+									valid_cell = cell['X'], cell['Y']
+									greedy_targets.append(valid_cell)
+							cell=A
+							#cek cell ke bawah
+							if cell['Y']!=0:
+								cell['Y']-=1
+								if not cell['Damaged'] and not cell['Missed']:
+									valid_cell = cell['X'], cell['Y']
+									greedy_targets.append(valid_cell)                                
+						if not cell['Damaged'] and not cell['Missed']:
+							valid_cell = cell['X'], cell['Y']
+							targets.append(valid_cell)
+					if greedy_targets!=[]:
+						target=choice(greedy_targets)
+					else:
+						target = choice(targets)
+					output_shot(*target)
 	return
 
 def energyround():
@@ -126,7 +128,41 @@ def diagonal_cross(cell):
 			if kosong_plus(cell):
 				output_shot(6,cell['X'],cell['Y'])	
 				tembak = True
-			
+
+def seeker(cell):
+	ships = state['PlayerMap']['Owner']['Ships']
+	for ship in ships:
+		if ship['ShipType'] == "Submarine" and ship['Destroyed'] == False:
+			bisa = True
+	if bisa == True:
+		if state['PlayerMap']['Owner']['Energy'] >= 10*energyround():
+			if kosong_plus(cell):
+				output_shot(6=7,cell['X'],cell['Y'])	
+				tembak = True
+
+def kosong3x3(cell):
+	kosong = kosong_plus(cell)
+	if kosong:
+		A = cell
+		A['X'] += 1
+		A['Y'] += 1
+		if A['Damaged']:
+			kosong = False
+		A['X'] -=2
+		if A['Damaged']:
+			kosong = False
+		A['Y'] -=2
+		if A['Damaged']:
+			kosong = False
+		A['X'] += 2
+		if A['Damaged']:
+			kosong = False
+		A['X'] -=1
+		A['Y'] +=1
+	return kosong
+	
+
+
 def kosong_plus(cell):
 	kosong = True
 	cell['X']+=1
@@ -142,6 +178,7 @@ def kosong_plus(cell):
 	cell['Y'] -=2
 	if cell['Damaged']:
 		kosong = False
+	cell['Y'] +=1
 	return kosong
 	
 
