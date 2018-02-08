@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from random import choice
+import time
 
 command_file = "command.txt"
 place_ship_file = "place.txt"
@@ -24,6 +25,7 @@ def main(player_key):
 
 
 def output_shot(choose, x, y):
+    time.sleep(1)
     with open(os.path.join(output_path, command_file), 'w') as f_out:
         f_out.write('{},{},{}'.format(choose, x, y))
         f_out.write('\n')
@@ -31,6 +33,8 @@ def output_shot(choose, x, y):
 
 
 def fire_shot(opponent_map):
+	global tembak
+	tembak = False
     # Punya kita!
 	find_hit(opponent_map)
 	if state['Round'] == 1 or hit == []:
@@ -88,7 +92,7 @@ def fire_shot(opponent_map):
 						target=choice(greedy_targets)
 					else:
 						target = choice(targets)
-					output_shot(*target)
+					output_shot(1, *target)
 	return
 
 def energyround():
@@ -97,12 +101,13 @@ def energyround():
 	elif map_size == 10:
 		enperround = 3
 	else:
-		enperround = 4;
+		enperround = 4
 	return enperround
 
 
 def double_shot(cell):
 	global tembak
+	bisa = False
 	ships = state['PlayerMap']['Owner']['Ships']
 	for ship in ships:
 		if ship['ShipType'] == "Destroyer" and ship['Destroyed'] == False:
@@ -112,6 +117,7 @@ def double_shot(cell):
 			if int(cell['Y']) != 0 and int(cell['Y']) != int(map_size)-1:
 				if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
 					output_shot(2,cell['X'],cell['Y'])	
+					tembak = True
 		else:
 			if (int(cell['Y']) == 0) or (int(cell['Y']) == int(map_size)-1):
 				if int(cell['X']) != 0 and int(cell['X']) != int(map_size)-1:
@@ -120,6 +126,8 @@ def double_shot(cell):
 						tembak = True
 				
 def diagonal_cross(cell):
+	global tembak
+	bisa = False
 	ships = state['PlayerMap']['Owner']['Ships']
 	for ship in ships:
 		if ship['ShipType'] == "Cruiser" and ship['Destroyed'] == False:
@@ -131,6 +139,7 @@ def diagonal_cross(cell):
 				tembak = True
 
 def seeker(cell):
+	global tembak
 	ships = state['PlayerMap']['Owner']['Ships']
 	for ship in ships:
 		if ship['ShipType'] == "Submarine" and ship['Destroyed'] == False:
@@ -199,15 +208,13 @@ def find_hit(opponent_map):
 	hit = []
 	for cell in opponent_map:
 		if cell['Damaged']:
-			valid = cell['X'], cell['Y']
-			hit.append(valid)
-	
+			hit.append(cell)
 		
 		#cek apakah disekitarnya ada hit...
 			
 
 def hitung_hit(opponent_map):
-	hitung = 0;
+	hitung = 0
 	for cell in opponent_map:
 		if cell['Damaged']:
 			hitung+=1
