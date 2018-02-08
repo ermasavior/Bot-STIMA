@@ -11,20 +11,21 @@ map_size = 0
 
 
 def main(player_key):
-    global map_size
+	global map_size
+	global state
     # Retrieve current game state
-    with open(os.path.join(output_path, game_state_file), 'r') as f_in:
-        state = json.load(f_in)
-    map_size = state['MapDimension']
-    if state['Phase'] == 1:
-        place_ships()
-    else:
-        fire_shot(state['OpponentMap']['Cells'])
+	with open(os.path.join(output_path, game_state_file), 'r') as f_in:
+		state = json.load(f_in)
+	map_size = state['MapDimension']
+	if state['Phase'] == 1:
+		place_ships()
+	else:
+		fire_shot(state['OpponentMap']['Cells'])
 
 
 def output_shot(choose, x, y):
     with open(os.path.join(output_path, command_file), 'w') as f_out:
-        f_out.write('{},{},{}'.format(move, x, y))
+        f_out.write('{},{},{}'.format(choose, x, y))
         f_out.write('\n')
     pass
 
@@ -107,13 +108,13 @@ def double_shot(cell):
 		if ship['ShipType'] == "Destroyer" and ship['Destroyed'] == False:
 			bisa = True
 	if bisa == True:
-		if (cell['X'] == 0) or (cell['X'] == map_size-1):
-			if cell['Y'] != 0 and cell['Y'] != map_size-1:
+		if (int(cell['X']) == 0) or (int(cell['X']) == int(map_size)-1):
+			if int(cell['Y']) != 0 and int(cell['Y']) != int(map_size)-1:
 				if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
 					output_shot(2,cell['X'],cell['Y'])	
 		else:
-			if (cell['Y'] == 0) or (cell['Y'] == map_size-1):
-				if cell['X'] != 0 and cell['X'] != map_size-1:
+			if (int(cell['Y']) == 0) or (int(cell['Y']) == int(map_size)-1):
+				if int(cell['X']) != 0 and int(cell['X']) != int(map_size)-1:
 					if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
 						output_shot(2,cell['X'],cell['Y'])	
 						tembak = True
