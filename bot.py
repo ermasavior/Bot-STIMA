@@ -137,7 +137,7 @@ def seeker(cell):
 	if bisa == True:
 		if state['PlayerMap']['Owner']['Energy'] >= 10*energyround():
 			if kosong_plus(cell):
-				output_shot(6=7,cell['X'],cell['Y'])	
+				output_shot(7,cell['X'],cell['Y'])	
 				tembak = True
 
 def kosong3x3(cell):
