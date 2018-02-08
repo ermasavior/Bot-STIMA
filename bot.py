@@ -92,6 +92,9 @@ def fire_shot(opponent_map):
 =======
 						target = choice(targets)
 					output_shot(1, *target)
+<<<<<<< HEAD
+>>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
+=======
 >>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
 	return
 
@@ -142,7 +145,10 @@ def diagonal_cross(cell):
 
 def seeker(cell):
 <<<<<<< HEAD
+<<<<<<< HEAD
 	bisa = False
+=======
+>>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
 =======
 >>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
 	global tembak
@@ -216,7 +222,10 @@ def find_hit(opponent_map):
 		if cell['Damaged']:
 			hit.append(cell)
 <<<<<<< HEAD
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
 =======
 >>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
 		
