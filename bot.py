@@ -2,7 +2,6 @@ import argparse
 import json
 import os
 from random import choice
-import time
 
 command_file = "command.txt"
 place_ship_file = "place.txt"
@@ -25,7 +24,6 @@ def main(player_key):
 
 
 def output_shot(choose, x, y):
-    time.sleep(1)
     with open(os.path.join(output_path, command_file), 'w') as f_out:
         f_out.write('{},{},{}'.format(choose, x, y))
         f_out.write('\n')
@@ -33,8 +31,6 @@ def output_shot(choose, x, y):
 
 
 def fire_shot(opponent_map):
-	global tembak
-	tembak = False
     # Punya kita!
 	global tembak 
 	tembak = False
@@ -82,20 +78,12 @@ def fire_shot(opponent_map):
 					if greedy_targets!=[]:
 						targetnow=choice(greedy_targets)
 					else:
-<<<<<<< HEAD
 						targets = []
 						for cell in opponent_map:
 							if not cell['Damaged'] and not cell['Missed']:
 								targets.append(cell)
 						targetnow = choice(targets)
 					output_shot(1, targetnow['X'], targetnow['Y'])
-=======
-						target = choice(targets)
-					output_shot(1, *target)
-<<<<<<< HEAD
->>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
-=======
->>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
 	return
 
 def energyround():
@@ -104,7 +92,7 @@ def energyround():
 	elif map_size == 10:
 		enperround = 3
 	else:
-		enperround = 4
+		enperround = 4;
 	return enperround
 
 
@@ -144,13 +132,7 @@ def diagonal_cross(cell):
 				tembak = True
 
 def seeker(cell):
-<<<<<<< HEAD
-<<<<<<< HEAD
 	bisa = False
-=======
->>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
-=======
->>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
 	global tembak
 	ships = state['PlayerMap']['Owner']['Ships']
 	for ship in ships:
@@ -221,19 +203,13 @@ def find_hit(opponent_map):
 	for cell in opponent_map:
 		if cell['Damaged']:
 			hit.append(cell)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	
-=======
->>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
-=======
->>>>>>> 74f2e99fcd0c0766381b916e50f42016109fca1b
 		
 		#cek apakah disekitarnya ada hit...
 			
 
 def hitung_hit(opponent_map):
-	hitung = 0
+	hitung = 0;
 	for cell in opponent_map:
 		if cell['Damaged']:
 			hitung+=1
