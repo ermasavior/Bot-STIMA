@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import time
 from random import choice
 
 command_file = "command.txt"
@@ -24,17 +25,17 @@ def main(player_key):
 
 
 def output_shot(choose, x, y):
-    with open(os.path.join(output_path, command_file), 'w') as f_out:
-        f_out.write('{},{},{}'.format(choose, x, y))
-        f_out.write('\n')
-    pass
-
-
+	time.sleep(1)
+	with open(os.path.join(output_path, command_file), 'w') as f_out:
+		f_out.write('{},{},{}'.format(choose, x, y))
+		f_out.write('\n')
+	pass
+	
 def fire_shot(opponent_map):
     # Punya kita!
 	global tembak 
 	tembak = False
-	find_hit(opponent_map)
+	hit = find_hit(opponent_map)
 	if state['Round'] == 1 or hit == []:
 		targets = []
 		for cell in opponent_map:
@@ -198,23 +199,12 @@ def myfire_shot(opponent_map):
 	return
 	
 def find_hit(opponent_map):
-	global hit
 	hit = []
 	for cell in opponent_map:
 		if cell['Damaged']:
 			hit.append(cell)
-	
-		
-		#cek apakah disekitarnya ada hit...
-			
-
-def hitung_hit(opponent_map):
-	hitung = 0;
-	for cell in opponent_map:
-		if cell['Damaged']:
-			hitung+=1
-	return hitung
-			
+	return hit
+	#cek apakah disekitarnya ada hit...
 
 def place_ships():
     # Please place your ships in the following format <Shipname> <x> <y> <direction>
