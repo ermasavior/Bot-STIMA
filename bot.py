@@ -32,9 +32,9 @@ def output_shot(choose, x, y):
 
 def fire_shot(opponent_map):
     # Punya kita!
+	hit = find_hit(opponent_map)
 	global tembak 
 	tembak = False
-	find_hit(opponent_map)
 	if state['Round'] == 1 or hit == []:
 		targets = []
 		for cell in opponent_map:
@@ -43,6 +43,7 @@ def fire_shot(opponent_map):
 		target = choice(targets)
 		output_shot(1,target['X'],target['Y'])
 	else:
+		shield()
 		target = choice(hit)
 		double_shot(target)
 		if not(tembak):
@@ -95,8 +96,19 @@ def energyround():
 		enperround = 4;
 	return enperround
 
-
-
+def shield():
+	pelindung = state['PlayerMap']['Owner']['Shield']
+	if pelindung['CurrentCharges'] > 0:
+		ships = state['PlayerMap']['Owner']['Ships']
+		for ship in ships:
+			if ship['ShipType'] == "Destroyer":
+				tempat_kapal = ship['Cells']
+				protect = []
+				for sel in tempat_kapal:
+					protect.append(sel)
+		protect_now = choice(protect)
+		output_shot(8,protect_now['X'], protect_now['Y'])		
+		
 
 def double_shot(cell):
 	global tembak
@@ -106,17 +118,17 @@ def double_shot(cell):
 		if ship['ShipType'] == "Destroyer" and ship['Destroyed'] == False:
 			bisa = True
 	if bisa == True:
-		if (cell['X'] == 0) or (cell['X'] == map_size-1):
-			if cell['Y'] != 0 and cell['Y'] != map_size-1:
-				if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
-					output_shot(2,cell['X'],cell['Y'])	
-					tembak = True
-		else:
-			if (cell['Y'] == 0) or (cell['Y'] == map_size-1):
-				if cell['X'] != 0 and cell['X'] != map_size-1:
-					if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
-						output_shot(2,cell['X'],cell['Y'])	
-						tembak = True
+	#~ if (cell['X'] == 0) or (cell['X'] == map_size-1):
+	#~ if cell['Y'] != 0 and cell['Y'] != map_size-1:
+		if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
+			output_shot(2,cell['X'],cell['Y'])	
+			tembak = True
+	else:
+	#~ if (cell['Y'] == 0) or (cell['Y'] == map_size-1):
+	#~ if cell['X'] != 0 and cell['X'] != map_size-1:
+		if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
+			output_shot(2,cell['X'],cell['Y'])	
+			tembak = True
 				
 def diagonal_cross(cell):
 	global tembak
@@ -203,18 +215,10 @@ def find_hit(opponent_map):
 	for cell in opponent_map:
 		if cell['Damaged']:
 			hit.append(cell)
+	return hit
 	
 		
 		#cek apakah disekitarnya ada hit...
-			
-
-def hitung_hit(opponent_map):
-	hitung = 0;
-	for cell in opponent_map:
-		if cell['Damaged']:
-			hitung+=1
-	return hitung
-			
 
 def place_ships():
     # Please place your ships in the following format <Shipname> <x> <y> <direction>
