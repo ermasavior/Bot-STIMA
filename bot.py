@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import time
+import prevstate
 from random import choice
 
 command_file = "command.txt"
@@ -10,40 +11,42 @@ game_state_file = "state.json"
 output_path = '.'
 map_size = 0
 
-
 def main(player_key):
-	global map_size
-	global state
+	global map_size, state
     # Retrieve current game state
+	prevstate.initPrevState()
 	with open(os.path.join(output_path, game_state_file), 'r') as f_in:
 		state = json.load(f_in)
 	map_size = state['MapDimension']
 	if state['Phase'] == 1:
 		place_ships()
+		prevstate.ClearPrevState()
 	else:
 		fire_shot(state['OpponentMap']['Cells'])
 
-
 def output_shot(choose, x, y):
-	time.sleep(1)
+	time.sleep(2)
+	#prevstate.updateLastShot(x, y)
 	with open(os.path.join(output_path, command_file), 'w') as f_out:
 		f_out.write('{},{},{}'.format(choose, x, y))
 		f_out.write('\n')
 	pass
 	
+def find_cell(X, Y):
+	idxCell = X*10+Y
+	cell = state['OpponentMap']['Cells'][idxCell]
+	return cell
+
 def fire_shot(opponent_map):
     # Punya kita!
 	hit = find_hit(opponent_map)
-	global tembak 
+	global tembak
 	tembak = False
-<<<<<<< HEAD
-=======
 	hit = find_hit(opponent_map)
->>>>>>> 5f4ef6f71c2f19d71e31fb3d4e30a528294cc9b8
 	if state['Round'] == 1 or hit == []:
 		targets = []
 		for cell in opponent_map:
-			if not cell['Damaged'] and not cell['Missed']:
+			if not cell['Damaged'] and not cell['Missed'] and not prevstate.isDeadShipCell(cell):
 				targets.append(cell)
 		target = choice(targets)
 		output_shot(1,target['X'],target['Y'])
@@ -57,30 +60,26 @@ def fire_shot(opponent_map):
 				seeker(target)
 				if not(tembak):
 					greedy_targets = []
-					A=target
-					if target['X']!=map_size-1:
 					#cek cell ke kanan
-						target['X']+=1
-						if not target['Damaged'] and not target['Missed']:
-							greedy_targets.append(target)
-					target=A
+					cell = find_cell(target['X']+1, target['Y'])
+					if cell['X'] <= map_size-1:
+						if not cell['Damaged'] and not cell['Missed']:
+							greedy_targets.append(cell)
 					#cek cell ke kiri
-					if target['X']!=0:
-						target['X']-=1
-						if not target['Damaged'] and not target['Missed']:
-							greedy_targets.append(target)
-					target=A
+					cell = find_cell(target['X']-1, target['Y'])
+					if cell['X'] >= 0:
+						if not cell['Damaged'] and not cell['Missed']:
+							greedy_targets.append(cell)
 					#cek cell ke atas
-					if target['Y']!=map_size-1:
-						target['Y']+=1
-						if not target['Damaged'] and not target['Missed']:
-							greedy_targets.append(target)
-					target=A
+					cell = find_cell(target['X'], target['Y']+1)
+					if cell['Y'] <= map_size-1:
+						if not cell['Damaged'] and not cell['Missed']:
+							greedy_targets.append(cell)
 					#cek cell ke bawah
-					if target['Y']!=0:
-						target['Y']-=1
-						if not target['Damaged'] and not target['Missed']:
-							greedy_targets.append(target)                                
+					cell = find_cell(target['X'], target['Y']-1)
+					if cell['Y']>=0:
+						if not cell['Damaged'] and not cell['Missed']:
+							greedy_targets.append(cell)                           
 					if greedy_targets!=[]:
 						targetnow=choice(greedy_targets)
 					else:
@@ -98,7 +97,7 @@ def energyround():
 	elif map_size == 10:
 		enperround = 3
 	else:
-		enperround = 4;
+		enperround = 4
 	return enperround
 
 def shield():
@@ -122,18 +121,18 @@ def double_shot(cell):
 	for ship in ships:
 		if ship['ShipType'] == "Destroyer" and ship['Destroyed'] == False:
 			bisa = True
-	if bisa == True:
+	if bisa:
 	#~ if (cell['X'] == 0) or (cell['X'] == map_size-1):
-	#~ if cell['Y'] != 0 and cell['Y'] != map_size-1:
-		if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
-			output_shot(2,cell['X'],cell['Y'])	
-			tembak = True
+		if cell['Y'] != 0 and cell['Y'] != map_size-1:
+			if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
+				output_shot(2,cell['X'],cell['Y'])	
+				tembak = True
 	else:
 	#~ if (cell['Y'] == 0) or (cell['Y'] == map_size-1):
-	#~ if cell['X'] != 0 and cell['X'] != map_size-1:
-		if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
-			output_shot(2,cell['X'],cell['Y'])	
-			tembak = True
+		if cell['X'] != 0 and cell['X'] != map_size-1:
+			if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
+				output_shot(2,cell['X'],cell['Y'])	
+				tembak = True
 				
 def diagonal_cross(cell):
 	global tembak
@@ -142,7 +141,7 @@ def diagonal_cross(cell):
 	for ship in ships:
 		if ship['ShipType'] == "Cruiser" and ship['Destroyed'] == False:
 			bisa = True
-	if bisa == True:
+	if bisa:
 		if state['PlayerMap']['Owner']['Energy'] >= 14*energyround():
 			if kosong_plus(cell):
 				output_shot(6,cell['X'],cell['Y'])	
@@ -155,7 +154,7 @@ def seeker(cell):
 	for ship in ships:
 		if ship['ShipType'] == "Submarine" and ship['Destroyed'] == False:
 			bisa = True
-	if bisa == True:
+	if bisa:
 		if state['PlayerMap']['Owner']['Energy'] >= 10*energyround():
 			if kosong_plus(cell):
 				output_shot(7,cell['X'],cell['Y'])	
@@ -181,8 +180,6 @@ def kosong3x3(cell):
 		A['X'] -=1
 		A['Y'] +=1
 	return kosong
-	
-
 
 def kosong_plus(cell):
 	kosong = True
@@ -202,17 +199,6 @@ def kosong_plus(cell):
 	cell['Y'] +=1
 	return kosong
 	
-
-def myfire_shot(opponent_map):
-	find_hit(opponent_map)
-	tempat = hit[0]
-	x,y = tempat
-	# if x+1,y belum damaged mka coba
-	# kalau sudah damaged, hapus dari hit 
-	# if x-1, y belum damaged mka coba
-	# if x, y+1 belum damaged mka coba
-	# if x, y-1 belum damaged mka coba
-	return
 	
 def find_hit(opponent_map):
 	hit = []
@@ -220,13 +206,10 @@ def find_hit(opponent_map):
 		if cell['Damaged']:
 			hit.append(cell)
 	return hit
-<<<<<<< HEAD
 	
 		
 		#cek apakah disekitarnya ada hit...
-=======
 	#cek apakah disekitarnya ada hit...
->>>>>>> 5f4ef6f71c2f19d71e31fb3d4e30a528294cc9b8
 
 def place_ships():
     # Please place your ships in the following format <Shipname> <x> <y> <direction>
