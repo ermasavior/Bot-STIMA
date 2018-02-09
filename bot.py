@@ -42,7 +42,6 @@ def fire_shot(opponent_map):
 	hit = find_hit(opponent_map)
 	global tembak
 	tembak = False
-	hit = find_hit(opponent_map)
 	if state['Round'] == 1 or hit == []:
 		targets = []
 		for cell in opponent_map:
@@ -201,6 +200,7 @@ def kosong_plus(cell):
 	
 	
 def find_hit(opponent_map):
+	global hit
 	hit = []
 	for cell in opponent_map:
 		if cell['Damaged']:
@@ -209,7 +209,6 @@ def find_hit(opponent_map):
 	
 		
 		#cek apakah disekitarnya ada hit...
-	#cek apakah disekitarnya ada hit...
 
 def place_ships():
     # Please place your ships in the following format <Shipname> <x> <y> <direction>
