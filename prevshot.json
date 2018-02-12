@@ -1,15 +1,16 @@
 {
-    "Debug": [
-        []
+    "LastShotTarget": [
+        3,
+        1
     ],
-    "LastShotTarget": [],
-    "DeadShipType": [
+    "FirstHitShot": "",
+    "LatestHitShot": "",
+    "ShipsType": [
         false,
         false,
         false,
-        false,
+        true,
         false
     ],
-    "DeadShipsCells": [],
-    "ShotTarget": []
+    "DeadShipsCells": []
 }

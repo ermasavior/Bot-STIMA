@@ -1,32 +1,69 @@
 import json
 import bot
+import math
 from random import choice
 
 prevshot_file = "prevshot.json"
 ShipLength = [3, 2, 4, 5, 3]
+debugFile = "debugging.json"
 
 # for debugging
 def debugPrevShot(Input):
     global prev_shot
-    with open("debugging.json", 'r+') as f:
-        prev_shot = json.load(f)
-        prev_shot["Debug"].append(Input)
+    with open(debugFile, 'r+') as f:
+        debug = json.load(f)
+        debug["Debug"].append(Input)
         f.seek(0)
-        json.dump(prev_shot, f, indent=4)
+        json.dump(debug, f, indent=4)
 
-def initPrevState():
+def initPrevState(OpponentMap):
+    global prev_shot, map_size, coorNextTarget
     readPrevState()
+    map_size = int(math.sqrt(len(OpponentMap["Cells"])))
+    FirstHitCell = ""
+    coorNextTarget = ""
     LastShot = prev_shot["LastShotTarget"]
-    if (LastShot != []):
-        if (LastShot['Damaged']):
-            prev_shot["HitShot"].append(LastShot)
-        prev_shot["LastShotTarget"] = ""
+    if (LastShot != ""):
+        cell = find_cell(OpponentMap, LastShot[0], LastShot[1])
+        if cell["Damaged"]:
+            if prev_shot["FirstHitShot"] == "":
+                prev_shot["FirstHitShot"] = LastShot
+                FirstHitCell = LastShot
+            else:
+                prev_shot["LatestHitShot"] = LastShot
+                FirstHitCell = prev_shot["FirstHitShot"]
+            coorNextTarget = LastShot
+        else:
+            coorNextTarget = prev_shot["FirstHitShot"]
     updatePrevState()
+    return FirstHitCell
+
+def chooseNextTarget(opponent_map):
+    if coorNextTarget == "":
+        return ""
+    else:
+        return opponent_map[coorNextTarget[0]*map_size + coorNextTarget[1]]
+
+def CheckShotOrientation():
+# ngehasilin vertical or horizontal (v/h)
+    FirstHitShot = prev_shot["FirstHitShot"]
+    LatestHitShot = prev_shot["LatestHitShot"]
+    if FirstHitShot != "" and LatestHitShot != "":
+        if FirstHitShot[0] == LatestHitShot[0]:
+            return "v"
+        elif FirstHitShot[1] == LatestHitShot[1]:
+            return "h"
+        else:
+            return ""
+    else:
+        return ""
 
 def ClearPrevState():
     global prev_shot
-    prev_shot["ShotTarget"] = []
-    prev_shot["DeadShipType"] = [False, False, False, False, False]
+    prev_shot["LastShotTarget"] = ""
+    prev_shot["LatestHitShot"] = ""
+    prev_shot["FirstHitShot"] = ""
+    prev_shot["ShipsType"] = [False, False, False, False, False]
     prev_shot["DeadShipsCells"] = []
     updatePrevState()
 
@@ -42,131 +79,113 @@ def updatePrevState():
     with open(prevshot_file, 'r+') as f:
         f.seek(0)
         json.dump(prev_shot, f, indent=4)
+        f.truncate()
 
-def isPrevShipDead(idx):
-# Check if a ship has died in previous round
-    DeadShipType = prev_shot['DeadShipType']
-    return (DeadShipType[idx])
-
-def enumDestroyedShip():
+def enumDestroyedShip(OpponentMap):
 # enumerate all destroyed ships in current round (in type number)
+# if no dead ships, return []
     global prev_shot
+    ShipState = []
     DestroyedShip = []
-    ShipList = bot.state['OpponentMap']['Ships']
-    for i in range(0, 5):
-        if ShipList[i]['Destroyed'] and not isPrevShipDead(i):
+    ShipList = OpponentMap['Ships']
+    PrevShipState = prev_shot['ShipsType']
+    i = 0
+    for Ship in ShipList:
+        ShipState.append(Ship['Destroyed'])
+        if (Ship['Destroyed'] != PrevShipState[i]):
             DestroyedShip.append(i)
-            prev_shot['DeadShipType'][i] = True
-    updatePrevState()
+        i += 1
+    prev_shot['ShipsType'] = ShipState
     return DestroyedShip
 
 # urutan nomor kapal (0,1,2,3,4)
 # submarine, destroyer, battleship, carrier, cruiser
-
 def isvalidCoor(X, Y):
-    return X>=0 and X<bot.map_size and Y>=0 and Y<bot.map_size
+    return X>=0 and X<map_size and Y>=0 and Y<map_size
 
-# stlah ternyata ada yg ketembak, ngecek cell yg barusan ketembak dan selidikin plus
-def seekDeadShipCells(cell, lenDeadShip):
+def find_cell(OpponentMap, X, Y):
+	return OpponentMap['Cells'][X*map_size + Y]
+
+# stlah ternyata ada yg ketembak, ngecek cell yg barusan ketembak dan selidikin di radius panjang kapal mati
+def seekDeadShipCells(cell, lenDeadShip, OpponentMap):
     X, Y = cell['X'], cell['Y']
     DamagedCells = []
     #seek horizontal right
-    i = 0
-    while (i<lenDeadShip):
-        if (isvalidCoor(X-i, Y)):
-            cell = bot.find_cell(X+i, Y)
-            if cell['Damaged'] and not isDeadShipCell(cell):
-                DamagedCells.append(cell)
-            else:
-                break
-        i += 1
-    #seek horizontal left
-    i = 0
+    i = 1
     while (i<lenDeadShip):
         if (isvalidCoor(X+i, Y)):
-            cell = bot.find_cell(X+i, Y)
+            cell = find_cell(OpponentMap, X+i, Y)
             if cell['Damaged'] and not isDeadShipCell(cell):
                 DamagedCells.append(cell)
+                i += 1
             else:
                 break
-        i -= 1
-    if DamagedCells == []:
+        else:
+            break
+    #seek horizontal left
+    i = 0
+    while (i>-1*lenDeadShip):
+        if (isvalidCoor(X+i, Y)):
+            cell = find_cell(OpponentMap, X+i, Y)
+            if cell['Damaged'] and not isDeadShipCell(cell):
+                DamagedCells.append(cell)          
+                i -= 1
+            else:
+                break
+        else:
+            break
+    if len(DamagedCells) < lenDeadShip:
         #seek vertical up
-        i = 0
+        i = 1
         while (i<lenDeadShip):
             if (isvalidCoor(X, Y+i)):
-                cell = bot.find_cell(X+i, Y)
+                cell = find_cell(OpponentMap, X, Y+i)
                 if cell['Damaged'] and not isDeadShipCell(cell):
-                    DamagedCells.append(cell)
+                    DamagedCells.append(cell)                
+                    i += 1
                 else:
                     break
-            i += 1
+            else:
+                break
         #seek vertical down
         i = 0
-        while (i<lenDeadShip):
+        while (i>-1*lenDeadShip):
             if (isvalidCoor(X, Y+i)):
-                cell = bot.find_cell(X+i, Y)
+                cell = find_cell(OpponentMap, X, Y+i)
                 if cell['Damaged'] and not isDeadShipCell(cell):
-                    DamagedCells.append(cell)
+                    DamagedCells.append(cell)                 
+                    i -= 1
                 else:
                     break
-            i -= 1
+            else:
+                break 
     return DamagedCells
 
-def updateDeadShipCells(Cell):
-    for ShipType in enumDestroyedShip():
-        lenDeadShip = ShipLength[ShipType]
-        prev_shot['DeadShipCells'] += seekDeadShipCells(Cell, lenDeadShip)
+# used in bot.py
+def updateAll(OpponentMap, X, Y):
+    updateLastShot(X, Y)
+    cell = OpponentMap["Cells"][X*map_size+Y]
+    updateOpponentShipCells(OpponentMap, cell)
+
+def updateOpponentShipCells(OpponentMap, Cell):
+    destroyedShip = enumDestroyedShip(OpponentMap)
+    if (destroyedShip != []):
+        #ada kapal yang mati
+        prev_shot["FirstHitShot"] = ""
+        prev_shot["LatestHitShot"] = ""
+        for ShipType in destroyedShip:
+            lenDeadShip = ShipLength[ShipType]
+            prev_shot['DeadShipsCells'] += seekDeadShipCells(Cell, lenDeadShip, OpponentMap)
     updatePrevState()
 
 def isDeadShipCell(Cell):
 # is a coordinate belongs to a dead ship
     DeadShipCells = prev_shot['DeadShipsCells']
-    return (Cell in DeadShipCells)
-
-def updateLastShot(X, Y):
-    global prev_shot
-    targetcell = bot.find_cell(X, Y)
-    prev_shot["LastShotTarget"] = targetcell
-    updatePrevState()
-
-'''
-def noteTarget(choose, X, Y):
-# yg udh ditarget simpen di file
-    if choose==1: #fireshot
-        Coor = X, Y
-        prev_shot['ShotTarget'].append(Coor)
-    elif choose==2:
-        Coor1 = X+1, Y
-        Coor2 = X-1, Y
-        prev_shot['ShotTarget'].append(Coor1) 
-        prev_shot['ShotTarget'].append(Coor2) 
-    elif choose==3:
-        Coor1 = X, Y+1
-        Coor2 = X, Y-1
-        prev_shot['ShotTarget'].append(Coor1) 
-        prev_shot['ShotTarget'].append(Coor2) 
-    updatePrevState()
-
-def isCurrentTarget(Cell):
-# boolean target fireshot
-    if Cell['Damaged']:
-        ShotCell = prev_shot['ShotTarget']
-        coorCell = Cell['X'], Cell['Y']
-        if ShotCell != []:
-            return (coorCell in ShotCell)
-        else:
-            return isDeadShipCoor(coor)
+    if DeadShipCells != []:
+        return (Cell in DeadShipCells)
     else:
         return False
 
-def chooseTarget(greedy_targets):
-    global map_size
-    chosen = choice(greedy_targets)
-    for target in greedy_targets:
-        temp = target['X']-2
-        target['X'] -= 2
-        if (target['X'] >= 0 and target['X'] <= map_size-1 and target['Damaged']):
-            chosen == target['X']
-    return chosen
-'''
+def updateLastShot(X, Y):
+    global prev_shot
+    prev_shot["LastShotTarget"] = (X, Y)
