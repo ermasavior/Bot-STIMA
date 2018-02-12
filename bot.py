@@ -29,7 +29,7 @@ def main(player_key):
 
 def output_shot(choose, x, y):
 	time.sleep(1)
-	if choose==1:
+	if choose!=8:
 		prevstate.updateCurrentState(OpponentMap, x, y)
 	with open(os.path.join(output_path, command_file), 'w') as f_out:
 		f_out.write('{},{},{}'.format(choose, x, y))
@@ -47,12 +47,12 @@ def fire_shot(opponent_map):
 	if state['Round'] == 1 or hit == []:
 		targets = []
 		for cell in opponent_map:
-			if not cell['Damaged'] and not cell['Missed']:
+			if not cell['Damaged'] and not cell['Missed'] and ((cell['X']%2 == 0 and cell['Y']%2 == 0) or (cell['X']%2 != 0 and cell['Y']%2 != 0)):
 				targets.append(cell)
 		target = choice(targets)
 		output_shot(1,target['X'],target['Y'])
 	else:
-		#shield()
+		shield()
 		if not tembak:
 			target = choice(hit)
 			seeker(target)
@@ -88,7 +88,7 @@ def fire_shot(opponent_map):
 						else:
 							targets = []
 							for cell in opponent_map:
-								if not cell['Damaged'] and not cell['Missed'] and ((cell['X']%2 == 0 and cell['Y']%2 == 0) or (cell['X']%2 != 0 and cell['Y']%2 != 0)):
+								if not cell['Damaged'] and not cell['Missed']:
 									targets.append(cell)
 							targetnow = choice(targets)
 						output_shot(1, targetnow['X'], targetnow['Y'])

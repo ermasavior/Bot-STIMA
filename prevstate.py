@@ -28,13 +28,14 @@ def initPrevState(OpponentMap):
         if cell["Damaged"]:
             if prev_shot["FirstHitShot"] == "":
                 prev_shot["FirstHitShot"] = LastShot
-                FirstHitCell = LastShot
             else:
                 prev_shot["LatestHitShot"] = LastShot
-                FirstHitCell = prev_shot["FirstHitShot"]
+                if prev_shot["FirstHitShot"] == prev_shot["LatestHitShot"]:
+                    prev_shot["LatestHitShot"] = ""
             coorNextTarget = LastShot
             #cek apakah ada kapal mati?
             updateOpponentShipCells(OpponentMap, cell)
+            FirstHitCell = prev_shot["FirstHitShot"]
         else:
             coorNextTarget = prev_shot["FirstHitShot"]
     updatePrevState()
