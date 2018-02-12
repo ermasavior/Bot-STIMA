@@ -1,16 +1,121 @@
 {
     "LastShotTarget": [
-        3,
-        1
+        1,
+        8
     ],
-    "FirstHitShot": "",
-    "LatestHitShot": "",
+    "FirstHitShot": [
+        3,
+        8
+    ],
+    "LatestHitShot": [
+        2,
+        8
+    ],
     "ShipsType": [
         false,
-        false,
-        false,
         true,
-        false
+        true,
+        true,
+        true
     ],
-    "DeadShipsCells": []
+    "DeadShipsCells": [
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 7,
+            "Y": 4,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 7,
+            "Y": 3,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 4,
+            "Y": 4,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 4,
+            "Y": 3,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 4,
+            "Y": 2,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 7,
+            "Y": 1,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 6,
+            "Y": 1,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 5,
+            "Y": 1,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 4,
+            "Y": 1,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 3,
+            "Y": 1,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 1,
+            "Y": 3,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 1,
+            "Y": 2,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 1,
+            "Y": 1,
+            "ShieldHit": false
+        },
+        {
+            "Damaged": true,
+            "Missed": false,
+            "X": 1,
+            "Y": 0,
+            "ShieldHit": false
+        }
+    ]
 }

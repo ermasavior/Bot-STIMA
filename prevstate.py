@@ -33,6 +33,8 @@ def initPrevState(OpponentMap):
                 prev_shot["LatestHitShot"] = LastShot
                 FirstHitCell = prev_shot["FirstHitShot"]
             coorNextTarget = LastShot
+            #cek apakah ada kapal mati?
+            updateOpponentShipCells(OpponentMap, cell)
         else:
             coorNextTarget = prev_shot["FirstHitShot"]
     updatePrevState()
@@ -110,31 +112,33 @@ def find_cell(OpponentMap, X, Y):
 def seekDeadShipCells(cell, lenDeadShip, OpponentMap):
     X, Y = cell['X'], cell['Y']
     DamagedCells = []
+    shotOrient = CheckShotOrientation()
     #seek horizontal right
-    i = 1
-    while (i<lenDeadShip):
-        if (isvalidCoor(X+i, Y)):
-            cell = find_cell(OpponentMap, X+i, Y)
-            if cell['Damaged'] and not isDeadShipCell(cell):
-                DamagedCells.append(cell)
-                i += 1
+    if shotOrient == "h":
+        i = 1
+        while (i<lenDeadShip):
+            if (isvalidCoor(X+i, Y)):
+                cell = find_cell(OpponentMap, X+i, Y)
+                if cell['Damaged'] and not isDeadShipCell(cell):
+                    DamagedCells.append(cell)
+                    i += 1
+                else:
+                    break
             else:
                 break
-        else:
-            break
-    #seek horizontal left
-    i = 0
-    while (i>-1*lenDeadShip):
-        if (isvalidCoor(X+i, Y)):
-            cell = find_cell(OpponentMap, X+i, Y)
-            if cell['Damaged'] and not isDeadShipCell(cell):
-                DamagedCells.append(cell)          
-                i -= 1
+        #seek horizontal left
+        i = 0
+        while (i>-1*lenDeadShip):
+            if (isvalidCoor(X+i, Y)):
+                cell = find_cell(OpponentMap, X+i, Y)
+                if cell['Damaged'] and not isDeadShipCell(cell):
+                    DamagedCells.append(cell)          
+                    i -= 1
+                else:
+                    break
             else:
                 break
-        else:
-            break
-    if len(DamagedCells) < lenDeadShip:
+    else:
         #seek vertical up
         i = 1
         while (i<lenDeadShip):
@@ -159,24 +163,23 @@ def seekDeadShipCells(cell, lenDeadShip, OpponentMap):
                     break
             else:
                 break 
+    debugPrevShot(DamagedCells)
     return DamagedCells
 
 # used in bot.py
-def updateAll(OpponentMap, X, Y):
+def updateCurrentState(OpponentMap, X, Y):
     updateLastShot(X, Y)
-    cell = OpponentMap["Cells"][X*map_size+Y]
-    updateOpponentShipCells(OpponentMap, cell)
+    updatePrevState()
 
 def updateOpponentShipCells(OpponentMap, Cell):
     destroyedShip = enumDestroyedShip(OpponentMap)
     if (destroyedShip != []):
         #ada kapal yang mati
-        prev_shot["FirstHitShot"] = ""
-        prev_shot["LatestHitShot"] = ""
         for ShipType in destroyedShip:
             lenDeadShip = ShipLength[ShipType]
             prev_shot['DeadShipsCells'] += seekDeadShipCells(Cell, lenDeadShip, OpponentMap)
-    updatePrevState()
+        prev_shot["FirstHitShot"] = ""
+        prev_shot["LatestHitShot"] = ""
 
 def isDeadShipCell(Cell):
 # is a coordinate belongs to a dead ship
