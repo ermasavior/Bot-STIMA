@@ -3,20 +3,15 @@ import bot
 import math
 from random import choice
 
-prevshot_file = "prevshot.json"
+prevshot_file = "prevshot.json"     #all previous state saved in prevshot_file
+# debugFile = "debugging.json" for debugging
 ShipLength = [3, 2, 4, 5, 3]
-debugFile = "debugging.json"
+# urutan indeks nomor kapal 0..4: submarine, destroyer, battleship, carrier, cruiser
 
-# for debugging
-def debugPrevShot(Input):
-    global prev_shot
-    with open(debugFile, 'r+') as f:
-        debug = json.load(f)
-        debug["Debug"].append(Input)
-        f.seek(0)
-        json.dump(debug, f, indent=4)
-
+## INITIALIZATION ##
 def initPrevState(OpponentMap):
+# initialize and read previous state from prevshot_file in json
+# calls orientation checker, sets and returns FirstHitCell from file, and LastHitCell from previous shot
     global prev_shot, map_size, coorNextTarget
     readPrevState()
     map_size = int(math.sqrt(len(OpponentMap["Cells"])))
@@ -43,27 +38,8 @@ def initPrevState(OpponentMap):
     updatePrevState()
     return FirstHitCell
 
-def chooseNextTarget(opponent_map):
-    if coorNextTarget == "":
-        return ""
-    else:
-        return opponent_map[coorNextTarget[0]*map_size + coorNextTarget[1]]
-
-def CheckShotOrientation():
-# ngehasilin vertical or horizontal (v/h)
-    FirstHitShot = prev_shot["FirstHitShot"]
-    LatestHitShot = prev_shot["LatestHitShot"]
-    if FirstHitShot != "" and LatestHitShot != "":
-        if FirstHitShot[0] == LatestHitShot[0]:
-            return "v"
-        elif FirstHitShot[1] == LatestHitShot[1]:
-            return "h"
-        else:
-            return ""
-    else:
-        return ""
-
 def ClearPrevState():
+# Clear prevshot_file datas on first phase
     global prev_shot
     prev_shot["LastShotTarget"] = ""
     prev_shot["LatestHitShot"] = ""
@@ -78,14 +54,45 @@ def readPrevState():
     with open(prevshot_file, 'r') as f:
         prev_shot = json.load(f)
         
-def updatePrevState():
-# update and rewrite prevshot file
-    global prev_shot
-    with open(prevshot_file, 'r+') as f:
-        f.seek(0)
-        json.dump(prev_shot, f, indent=4)
-        f.truncate()
+def CheckShotOrientation():
+# returns shot target orientation, vertical or horizontal (v/h)
+    FirstHitShot = prev_shot["FirstHitShot"]
+    LatestHitShot = prev_shot["LatestHitShot"]
+    if FirstHitShot != "" and LatestHitShot != "":
+        if FirstHitShot[0] == LatestHitShot[0]:
+            return "v"
+        elif FirstHitShot[1] == LatestHitShot[1]:
+            return "h"
+        else:
+            return ""
+    else:
+        return ""
 
+## CELL PICKER AND CHECKER ##
+def chooseNextTarget(opponent_map):
+# returns NextTarget cell
+    if coorNextTarget == "":
+        return ""
+    else:
+        return opponent_map[coorNextTarget[0]*map_size + coorNextTarget[1]]
+
+def find_cell(OpponentMap, X, Y):
+# return cell with coordinate X,Y
+	return OpponentMap['Cells'][X*map_size + Y]
+
+def isvalidCoor(X, Y):
+# check is a pair of absis ordinate is valid
+    return X>=0 and X<map_size and Y>=0 and Y<map_size
+
+def isDeadShipCell(Cell):
+# check if a coordinate belongs to a dead ship
+    DeadShipCells = prev_shot['DeadShipsCells']
+    if DeadShipCells != []:
+        return (Cell in DeadShipCells)
+    else:
+        return False
+
+## DEAD SHIP CELLS MANAGER ##
 def enumDestroyedShip(OpponentMap):
 # enumerate all destroyed ships in current round (in type number)
 # if no dead ships, return []
@@ -103,16 +110,9 @@ def enumDestroyedShip(OpponentMap):
     prev_shot['ShipsType'] = ShipState
     return DestroyedShip
 
-# urutan nomor kapal (0,1,2,3,4)
-# submarine, destroyer, battleship, carrier, cruiser
-def isvalidCoor(X, Y):
-    return X>=0 and X<map_size and Y>=0 and Y<map_size
-
-def find_cell(OpponentMap, X, Y):
-	return OpponentMap['Cells'][X*map_size + Y]
-
-# stlah ternyata ada yg ketembak, ngecek cell yg barusan ketembak dan selidikin di radius panjang kapal mati
 def seekDeadShipCells(cell, lenDeadShip, OpponentMap):
+# stlah ternyata ada yg ketembak, mengecek cell yg barusan ketembak dan selidikin di radius panjang kapal mati
+# mengecek cell yang barusan ketembak dan selidiki atas kanan kiri bawa
     X, Y = cell['X'], cell['Y']
     DamagedCells = []
     shotOrient = CheckShotOrientation()
@@ -166,15 +166,25 @@ def seekDeadShipCells(cell, lenDeadShip, OpponentMap):
                     break
             else:
                 break 
-    debugPrevShot(DamagedCells)
     return DamagedCells
 
-# used in bot.py
+## PREVSTATE UPDATER ##
 def updateCurrentState(OpponentMap, X, Y):
+# Memanggil semua prosedur updater
     updateLastShot(X, Y)
     updatePrevState()
 
+def updatePrevState():
+# update and rewrite prevshot file
+    global prev_shot
+    with open(prevshot_file, 'r+') as f:
+        f.seek(0)
+        json.dump(prev_shot, f, indent=4)
+        f.truncate()
+
 def updateOpponentShipCells(OpponentMap, Cell):
+# Mengecek apakah ada kapal lawan yang mati akibat tembakan pada ronde sebelumnya
+# Jika ada, mengenumerasikan semua cell yang mengandung kapal mati
     destroyedShip = enumDestroyedShip(OpponentMap)
     if (destroyedShip != []):
         #ada kapal yang mati
@@ -185,13 +195,18 @@ def updateOpponentShipCells(OpponentMap, Cell):
         prev_shot["LatestHitShot"] = ""
 
 def updateLastShot(X, Y):
+# Mengambil data lokasi tembakan terakhir pada file
     global prev_shot
     prev_shot["LastShotTarget"] = (X, Y)
 
-def isDeadShipCell(Cell):
-# is a coordinate belongs to a dead ship
-    DeadShipCells = prev_shot['DeadShipsCells']
-    if DeadShipCells != []:
-        return (Cell in DeadShipCells)
-    else:
-        return False
+## For debugging Only##
+'''
+def debugPrevShot(Input):
+# Menampilkan sesuatu pada file debugging
+    global prev_shot
+    with open(debugFile, 'r+') as f:
+        debug = json.load(f)
+        debug["Debug"].append(Input)
+        f.seek(0)
+        json.dump(debug, f, indent=4)
+        '''
