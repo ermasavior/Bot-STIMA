@@ -1,0 +1,13 @@
+{
+    "LastShotTarget":"",
+    "FirstHitShot": "",
+    "LatestHitShot": "",
+    "ShipsType": [
+        false,
+        false,
+        false,
+        false,
+        false
+    ],
+    "DeadShipsCells": []
+}
