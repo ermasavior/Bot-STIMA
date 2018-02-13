@@ -37,7 +37,9 @@ def initPrevState(OpponentMap):
             updateOpponentShipCells(OpponentMap, cell)
             FirstHitCell = prev_shot["FirstHitShot"]
         else:
-            coorNextTarget = prev_shot["FirstHitShot"]
+            ShieldHit = cell["ShieldHit"]
+            if not ShieldHit:
+                coorNextTarget = prev_shot["FirstHitShot"]
     updatePrevState()
     return FirstHitCell
 
@@ -182,6 +184,10 @@ def updateOpponentShipCells(OpponentMap, Cell):
         prev_shot["FirstHitShot"] = ""
         prev_shot["LatestHitShot"] = ""
 
+def updateLastShot(X, Y):
+    global prev_shot
+    prev_shot["LastShotTarget"] = (X, Y)
+
 def isDeadShipCell(Cell):
 # is a coordinate belongs to a dead ship
     DeadShipCells = prev_shot['DeadShipsCells']
@@ -189,7 +195,3 @@ def isDeadShipCell(Cell):
         return (Cell in DeadShipCells)
     else:
         return False
-
-def updateLastShot(X, Y):
-    global prev_shot
-    prev_shot["LastShotTarget"] = (X, Y)

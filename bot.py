@@ -13,6 +13,7 @@ shotOrient = ""
 FirstHitCell = ""
 
 def main(player_key):
+# Inisialisasi Game
 	global map_size, state, shotOrient, FirstHitCell, OpponentMap
     # Retrieve current game state
 	with open(os.path.join(output_path, game_state_file), 'r') as f_in:
@@ -40,59 +41,68 @@ def find_cell(X, Y):
 	return state['OpponentMap']['Cells'][X*map_size + Y]
 
 def fire_shot(opponent_map):
-    # Punya kita!
-	hit = find_hit(opponent_map)
+# Mengatur pilihan tembakan dan target
 	global tembak
+	hit = find_hit(opponent_map)
 	tembak = False
-	if state['Round'] == 1 or hit == []:
+	if hit == []:
 		targets = []
 		for cell in opponent_map:
 			if not cell['Damaged'] and not cell['Missed'] and ((cell['X']%2 == 0 and cell['Y']%2 == 0) or (cell['X']%2 != 0 and cell['Y']%2 != 0)):
 				targets.append(cell)
 		target = choice(targets)
-		output_shot(1,target['X'],target['Y'])
+		seeker(target)
+		diagonal_cross(target)
+		#double_shot(target)
+		if not tembak:
+			output_shot(1,target['X'],target['Y'])
 	else:
 		shield()
-		if not tembak:
-			target = choice(hit)
-			seeker(target)
-			if not(tembak):
-				diagonal_cross(target)
-				if not(tembak):
-					double_shot(target)
-					if not(tembak):
-						targets = SelectGreedyTarget(hit)  
-						if targets != []:
-							target = choice(targets)
-							greedy_targets = []
-							cell = find_cell(target['X']+1, target['Y'])
-							if cell['X'] <= map_size-1:
-								if not cell['Damaged'] and not cell['Missed']:
-									greedy_targets.append(cell)
-							#cek cell ke kiri
-							cell = find_cell(target['X']-1, target['Y'])
-							if cell['X'] >= 0:
-								if not cell['Damaged'] and not cell['Missed']:
-									greedy_targets.append(cell)
-							#cek cell ke atas
-							cell = find_cell(target['X'], target['Y']+1)
-							if cell['Y'] <= map_size-1:
-								if not cell['Damaged'] and not cell['Missed']:
-									greedy_targets.append(cell)
-							#cek cell ke bawah
-							cell = find_cell(target['X'], target['Y']-1)
-							if cell['Y']>=0:
-								if not cell['Damaged'] and not cell['Missed']:
-									greedy_targets.append(cell)     
-							targetnow = choice(SelectTarget(greedy_targets))
-						else:
-							targets = []
-							for cell in opponent_map:
-								if not cell['Damaged'] and not cell['Missed']:
-									targets.append(cell)
-							targetnow = choice(targets)
-						output_shot(1, targetnow['X'], targetnow['Y'])
+		if not(tembak):
+			targets = SelectGreedyTarget(hit)
+			if targets != []:
+				target = choice(targets)
+				greedy_targets = []
+				cell = find_cell(target['X']+1, target['Y'])
+				if cell['X'] <= map_size-1:
+					if not cell['Damaged'] and not cell['Missed']:
+						greedy_targets.append(cell)
+				#cek cell ke kiri
+				cell = find_cell(target['X']-1, target['Y'])
+				if cell['X'] >= 0:
+					if not cell['Damaged'] and not cell['Missed']:
+						greedy_targets.append(cell)
+				#cek cell ke atas
+				cell = find_cell(target['X'], target['Y']+1)
+				if cell['Y'] <= map_size-1:
+					if not cell['Damaged'] and not cell['Missed']:
+						greedy_targets.append(cell)
+				#cek cell ke bawah
+				cell = find_cell(target['X'], target['Y']-1)
+				if cell['Y']>=0:
+					if not cell['Damaged'] and not cell['Missed']:
+						greedy_targets.append(cell)     
+				targetnow = choice(SelectTarget(greedy_targets))
+			else:
+				targets = []
+				for cell in opponent_map:
+					if not cell['Damaged'] and not cell['Missed']:
+						targets.append(cell)
+				targetnow = choice(targets)
+			output_shot(1, targetnow['X'], targetnow['Y'])
 	return
+
+def find_hit(opponent_map):
+	global hit
+	nextTarget = prevstate.chooseNextTarget(opponent_map)
+	hit = []
+	if nextTarget == "":
+		for cell in opponent_map:
+			if cell['Damaged'] and not prevstate.isDeadShipCell(cell):
+				hit.append(cell)
+	else:
+		hit.append(nextTarget)
+	return hit
 
 def SelectTarget(hitList):
 	hitTarget = []
@@ -151,7 +161,7 @@ def energyround():
 def shield():
 	global tembak
 	pelindung = state['PlayerMap']['Owner']['Shield']
-	if pelindung['CurrentCharges'] > 0:
+	if pelindung['CurrentCharges'] > 5:
 		ships = state['PlayerMap']['Owner']['Ships']
 		for ship in ships:
 			if ship['ShipType'] == "Destroyer":
@@ -170,52 +180,57 @@ def shield():
 		output_shot(8,protect_now['X'], protect_now['Y'])	
 		tembak = True		
 
+## Jenis Tembakan ##
 def double_shot(cell):
 	global tembak
-	bisa = False
-	ships = state['PlayerMap']['Owner']['Ships']
-	for ship in ships:
-		if ship['ShipType'] == "Destroyer" and ship['Destroyed'] == False:
-			bisa = True
-	if bisa:
-		if kosong_double(cell,'v'):
-			if cell['Y'] != 0 and cell['Y'] != map_size-1:
-				if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
-					output_shot(2,cell['X'],cell['Y'])	
-					tembak = True
-		else:
-			if kosong_double(cell,'h'):
-				if cell['X'] != 0 and cell['X'] != map_size-1:
+	if not tembak:
+		bisa = False
+		ships = state['PlayerMap']['Owner']['Ships']
+		for ship in ships:
+			if ship['ShipType'] == "Destroyer" and ship['Destroyed'] == False:
+				bisa = True
+		if bisa:
+			if kosong_double(cell,'v'):
+				if cell['Y'] != 0 and cell['Y'] != map_size-1:
 					if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
 						output_shot(2,cell['X'],cell['Y'])	
 						tembak = True
+			else:
+				if kosong_double(cell,'h'):
+					if cell['X'] != 0 and cell['X'] != map_size-1:
+						if state['PlayerMap']['Owner']['Energy'] >= 8*energyround():
+							output_shot(2,cell['X'],cell['Y'])	
+							tembak = True
 				
 def diagonal_cross(cell):
 	global tembak
-	bisa = False
-	ships = state['PlayerMap']['Owner']['Ships']
-	for ship in ships:
-		if ship['ShipType'] == "Cruiser" and ship['Destroyed'] == False:
-			bisa = True
-	if bisa:
-		if state['PlayerMap']['Owner']['Energy'] >= 14*energyround():
-			if kosong_plus(cell):
-				output_shot(6,cell['X'],cell['Y'])	
-				tembak = True
+	if not tembak:
+		bisa = False
+		ships = state['PlayerMap']['Owner']['Ships']
+		for ship in ships:
+			if ship['ShipType'] == "Cruiser" and ship['Destroyed'] == False:
+				bisa = True
+		if bisa:
+			if state['PlayerMap']['Owner']['Energy'] >= 14*energyround():
+				if kosong_plus(cell):
+					output_shot(6,cell['X'],cell['Y'])	
+					tembak = True
 
 def seeker(cell):
-	bisa = False
 	global tembak
-	ships = state['PlayerMap']['Owner']['Ships']
-	for ship in ships:
-		if ship['ShipType'] == "Submarine" and ship['Destroyed'] == False:
-			bisa = True
-	if bisa:
-		if state['PlayerMap']['Owner']['Energy'] >= 10*energyround():
-			if kosong_plus(cell):
-				output_shot(7,cell['X'],cell['Y'])	
-				tembak = True
+	bisa = False
+	if not tembak:
+		ships = state['PlayerMap']['Owner']['Ships']
+		for ship in ships:
+			if ship['ShipType'] == "Submarine" and ship['Destroyed'] == False:
+				bisa = True
+		if bisa:
+			if state['PlayerMap']['Owner']['Energy'] >= 10*energyround():
+				if kosong_plus(cell):
+					output_shot(7,cell['X'],cell['Y'])	
+					tembak = True
 
+## Cek cell sebelum memilih jenis tembakan ##
 def kosong3x3(cell):
 	kosong = kosong_plus(cell)
 	if kosong:
@@ -237,72 +252,142 @@ def kosong3x3(cell):
 def kosong_double(cell,c):
 	kosong = True
 	if c == 'v':
-		A = find_cell(cell['X'], cell['Y']+1)
-		if A['Damaged']:
+		if cell['Y'] < map_size-1:
+			A = find_cell(cell['X'], cell['Y']+1)
+			if A['Damaged']:
+				kosong = False
+		else:
 			kosong = False
-		A = find_cell(cell['X'], cell['Y']-1)
-		if A['Damaged']:
+		if cell['Y'] > 0:
+			A = find_cell(cell['X'], cell['Y']-1)
+			if A['Damaged']:
+				kosong = False
+		else:
 			kosong = False
 	else:
-		A = find_cell(cell['X']+1, cell['Y'])
-		if A['Damaged']:
+		if cell['X'] < map_size -1:
+			A = find_cell(cell['X']+1, cell['Y'])
+			if A['Damaged']:
+				kosong = False
+		else:
 			kosong = False
-		A = find_cell(cell['X']-1, cell['Y'])
-		if A['Damaged']:
+		if cell['X'] > 0:
+			A = find_cell(cell['X']-1, cell['Y'])
+			if A['Damaged']:
+				kosong = False
+		else:
 			kosong = False
 	return kosong
 
 def kosong_plus(cell):
 	kosong = True
-	cell['X']+=1
-	if cell['Damaged']:
+	if cell['X'] < map_size -1:
+		A = find_cell(cell['X']+1,cell['Y'])
+		if A['Damaged']:
+			kosong = False
+	else: 
 		kosong = False
-	cell['X']-=2
-	if cell['Damaged']:
-		kosong = False
-	cell['X'] += 1
-	cell['Y'] += 1
-	if cell['Damaged']:
-		kosong = False
-	cell['Y'] -=2
-	if cell['Damaged']:
-		kosong = False
-	cell['Y'] +=1
-	return kosong
-	
-	
-def find_hit(opponent_map):
-	global hit
-	nextTarget = prevstate.chooseNextTarget(opponent_map)
-	hit = []
-	if nextTarget == "":
-		for cell in opponent_map:
-			if cell['Damaged'] and not prevstate.isDeadShipCell(cell):
-				hit.append(cell)
+	if cell['X'] > 0 :
+		A = find_cell(cell['X']-1,cell['Y'])
+		if A['Damaged']:
+			kosong = False
 	else:
-		hit.append(nextTarget)
-	return hit
-	
+		kosong = False
+	if cell['Y'] < map_size -1:
+		A = find_cell(cell['X'],cell['Y']+1)
+		if A['Damaged']:
+			kosong = False
+	else:
+		kosong = False
+	if cell['Y'] > 0 :
+		A = find_cell(cell['X']+1,cell['Y']-1)
+		if A['Damaged']:
+			kosong = False
+	else:
+		kosong = False
+	return kosong	
 
+## Taruh Kapal ##	
 def place_ships():
-    # Please place your ships in the following format <Shipname> <x> <y> <direction>
-    # Ship names: Battleship, Cruiser, Carrier, Destroyer, Submarine
-    # Directions: north east south west
+# Please place your ships in the following format <Shipname> <x> <y> <direction>
+# Ship names: Battleship, Cruiser, Carrier, Destroyer, Submarine
+# Directions: north east south west
+	nomor=[1,2,3]
+	pilih=choice(nomor)
+	if map_size==7:
+		if pilih==1:
+			ships = [
+				'Battleship 6 0 north', 
+				'Carrier 0 3 east', 
+				'Cruiser 2 1 east', 
+				'Submarine 5 4 north', 
+				'Destroyer 2 6 east']
+		elif pilih==2:
+			ships = [
+				'Battleship 6 1 west', 
+				'Carrier 1 4 east', 
+				'Cruiser 0 6 east', 
+				'Submarine 6 6 west', 
+				'Destroyer 2 2 west' ]
+		elif pilih==3:
+			ships = [
+				'Battleship 5 3 north', 
+				'Carrier 1 0 east', 
+				'Cruiser 1 2 east', 
+				'Submarine 0 5 east', 
+				'Destroyer 2 4 east']
+	elif map_size==10:
+		if pilih==1:
+			ships = [
+				'Battleship 2 2 east', 
+				'Carrier 2 7 east', 
+				'Cruiser 7 2 south', 
+				'Submarine 8 9 south', 
+				'Destroyer 3 4 north']
+		elif pilih==2:
+			ships = [
+				'Battleship 1 0 north', 
+				'Carrier 3 4 north', 
+				'Cruiser 5 2 north', 
+				'Submarine 8 9 south', 
+				'Destroyer 7 1 east']
+		elif pilih==3:
+			ships = [
+				'Battleship 1 1 north', 
+				'Carrier 3 1 east', 
+				'Cruiser 4 3 north', 
+				'Submarine 7 6 north', 
+				'Destroyer 1 8 east']
+	elif map_size==14:
+		if pilih==1:
+			ships = [
+				'Battleship 13 6 south', 
+				'Carrier 5 0 east', 
+				'Cruiser 0 6 east', 
+				'Submarine 8 13 south', 
+				'Destroyer 3 10 north']
+		elif pilih==2:
+			ships = [
+				'Battleship 1 5 north', 
+				'Carrier 3 13 east', 
+				'Cruiser 9 11 east', 
+				'Submarine 7 4 south', 
+				'Destroyer 13 5 north']
+		elif pilih==3:
+			ships = [
+				'Battleship 1 5 north', 
+				'Carrier 4 13 south', 
+				'Cruiser 12 8 north', 
+				'Submarine 6 2 north', 
+				'Destroyer 11 1 east']
 
-    ships = ['Battleship 1 0 north',
-             'Carrier 3 1 East',
-             'Cruiser 4 2 north',
-             'Destroyer 7 3 north',
-             'Submarine 1 8 East'
-             ]
+	with open(os.path.join(output_path, place_ship_file), 'w') as f_out:
+		for ship in ships:
+			f_out.write(ship)
+			f_out.write('\n')
+	return
 
-    with open(os.path.join(output_path, place_ship_file), 'w') as f_out:
-        for ship in ships:
-            f_out.write(ship)
-            f_out.write('\n')
-    return
-
-
+### MAIN PROGRAM ###
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('PlayerKey', nargs='?', help='Player key registered in the game')
