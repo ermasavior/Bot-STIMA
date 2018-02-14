@@ -30,8 +30,7 @@ def main(player_key):
 		fire_shot(OpponentMap['Cells'])
 
 def output_shot(choose, x, y):
-	#time.sleep(1) untuk keperluan time delay
-	prevstate.debugPrevShot(choose)
+	#time.sleep(1) #untuk keperluan time delay
 	if choose!=8:
 		prevstate.updateCurrentState(OpponentMap, x, y)
 	with open(os.path.join(output_path, command_file), 'w') as f_out:

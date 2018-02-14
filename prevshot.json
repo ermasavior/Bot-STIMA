@@ -1,7 +1,7 @@
 {
-    "LastShotTarget":"",
-    "FirstHitShot": "",
-    "LatestHitShot": "",
+    "LastShotTarget": [],
+    "FirstHitShot": [],
+    "LatestHitShot": [],
     "ShipsType": [
         false,
         false,
@@ -9,5 +9,6 @@
         false,
         false
     ],
-    "DeadShipsCells": []
+    "DeadShipsCells": [
+]
 }
